@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { webSocket } from "rxjs/webSocket";
 import { map } from 'rxjs/operators';
 const subject = webSocket({
-	url: "ws://localhost:3500",
+	url: "ws://localhost:"+process.env.PORT,
 	deserializer: data => data
 });
 
