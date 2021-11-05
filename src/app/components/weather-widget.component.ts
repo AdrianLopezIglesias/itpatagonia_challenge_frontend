@@ -2,10 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { webSocket } from "rxjs/webSocket";
 import { map } from 'rxjs/operators';
 
-let url = window.location.href.replace("https://", "")
-url = url.replace("/", "")
-if (true) {
+let url: string
+let env = "FROM_HEROKU" //SERVER_LOCAL, TO_HEROKU, FROM_HEROKU
+
+if (env == "FROM_HEROKU") {
+	url = window.location.href.replace("https://", "")
+	url = url.replace("/", "")
+}
+
+if (env == "SERVER_LOCAL") {
 	url = "localhost:3500"
+}
+if (env == "TO_HEROKU") {
+	url = "wss://damp-basin-32272.herokuapp.com/"
 }
 const subject = webSocket({
 	url: "ws://"+ url,
