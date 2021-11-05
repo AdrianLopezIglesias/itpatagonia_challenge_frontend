@@ -1,8 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { webSocket } from "rxjs/webSocket";
 import { map } from 'rxjs/operators';
+
+let url = window.location.href.replace("https://", "")
+url = url.replace("/", "")
+if (true) {
+	url = "localhost:3500"
+}
 const subject = webSocket({
-	url: "ws://localhost:3500",
+	url: "ws://"+ url,
 	deserializer: data => data
 });
 
@@ -13,6 +19,12 @@ const subject = webSocket({
 @Component({
 	selector: 'weather-widget',
 	template: `
+	<select (change)="changeCurrentCity($event.target.value)">
+		<option *ngFor="let city of static_cities" [value]="city">
+			{{city}}
+		</option>
+	</select>
+
 		<p>El clima en 								 {{weather.name}}</p>
 		<p>{{weather.weather[0].main}}</p>
 		<p>Temperatura							 : {{weather.main.temp}}</p>
@@ -47,14 +59,15 @@ export class WeatherWidgetComponent implements OnInit {
 			speed: 'Esperando datos del servidor'
 		}
 	}
+	cities = []
+	static_cities = ['Buenos Aires F.D.', 'Santa Fe', 'San Miguel de Tucumán', 'Río Negro Province', 'Cordova']
+	current_city = 'Buenos Aires F.D.'
 
 
 
 	ngOnInit(): void {
-		
-
 		subject.subscribe(
-			(data) => this.setWeather(JSON.parse(data.data)),
+			(data) => this.setWeather((data.data)),
 			(err) => console.log(err),
 			() => console.log('complete')
 		);
@@ -62,9 +75,11 @@ export class WeatherWidgetComponent implements OnInit {
 		subject.next(message);
 	}
 
-
-
-	setWeather(data) {
+	changeCurrentCity(city) {
+		let datax = this.cities.filter(x => {
+			return x.name == city
+		})
+		let data = datax[0]
 		this.weather = {
 			name: data.name,
 			weather: [{ main: data.weather[0].main +" "+ data.weather[0].description }],
@@ -82,7 +97,14 @@ export class WeatherWidgetComponent implements OnInit {
 				speed: data.wind.speed + " kmh"
 			}
 		}
-		console.log(data);
+	 }
+
+	setWeather(data) {
+		// console.log("🚀 ~ file: weather-widget.component.ts ~ line 108 ~ WeatherWidgetComponent ~ setWeather ~ data", data)
+		data = (JSON.parse(data))
+    console.log("🚀 ~ file: weather-widget.component.ts ~ line 109 ~ WeatherWidgetComponent ~ setWeather ~ data", data)
+		this.cities = (data)
+		this.changeCurrentCity('Buenos Aires F.D.')
 	}
 
 }
