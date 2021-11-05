@@ -6,18 +6,18 @@ let url: string
 let env = "FROM_HEROKU" //SERVER_LOCAL, TO_HEROKU, FROM_HEROKU
 
 if (env == "FROM_HEROKU") {
-	url = window.location.href.replace("https://", "")
-	url = url.replace("/", "")
+	url = window.location.href.replace("https://", "");
+url = url.replace("/", "");
+url = "wss://" + url
 }
-
 if (env == "SERVER_LOCAL") {
-	url = "localhost:3500"
+	url = "ws://localhost:3500";
 }
 if (env == "TO_HEROKU") {
-	url = "wss://damp-basin-32272.herokuapp.com/"
+	url = "wss://damp-basin-32272.herokuapp.com/";
 }
 const subject = webSocket({
-	url: "ws://"+ url,
+	url: url,
 	deserializer: data => data
 });
 
