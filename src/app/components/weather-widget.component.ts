@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { webSocket } from "rxjs/webSocket";
 import { map } from 'rxjs/operators';
+import { isString } from 'util';
 
 let url: string
-let env = "FROM_HEROKU" //SERVER_LOCAL, TO_HEROKU, FROM_HEROKU
+let env = "TO_HEROKU" //SERVER_LOCAL, TO_HEROKU, FROM_HEROKU
 
 if (env == "FROM_HEROKU") {
 	url = window.location.href.replace("https://", "");
@@ -28,23 +29,67 @@ const subject = webSocket({
 @Component({
 	selector: 'weather-widget',
 	template: `
-	<select (change)="changeCurrentCity($event.target.value)">
+	<div class="container">
+	
+	<br/>
+	<select (change)="changeCurrentCity($event.target.value)" class="form-control">
 		<option *ngFor="let city of static_cities" [value]="city">
 			{{city}}
 		</option>
 	</select>
-
-		<p>El clima en 								 {{weather.name}}</p>
-		<p>{{weather.weather[0].main}}</p>
-		<p>Temperatura							 : {{weather.main.temp}}</p>
-		<p>Sensación   térmica       : {{weather.main.feels_like}}</p>
-		<p>Temperatura mínima        : {{weather.main.temp_min}}</p>
-		<p>Temperatura máxima        : {{weather.main.temp_max}}</p>
-		<p>Presión     atmosferica   : {{weather.main.pressure}}</p>
-		<p>Humedad    							 : {{weather.main.humidity}}</p>
-		<p>Visibilidad 							 : {{weather.visibility}}</p>
-		<p>Viento dirección					 : {{weather.wind.deg}}</p>
-		<p>Viento velocidad					 : {{weather.wind.speed}}</p>
+	<br/>
+	<div class="container-fluid">
+	<p>{{weather.weather[0].main}} <img src="/{{weather.weather[0].icon}}"></p>
+	<table class="table">
+	<tbody>
+	<tr>
+	<td>País</td>
+	<td>{{weather.country}}</td>
+	</tr>
+	<tr>
+	<td>Hora actual</td>
+	<td>{{getTime(weather.timezone)}}</td>
+	</tr>
+	<tr>
+	<td>Temperatura actual</td>
+	<td>{{weather.main.temp}}</td>
+	</tr>
+	<tr>
+	<td>Sensación térmica</td>
+	<td>{{weather.main.feels_like}}</td>
+	</tr>
+	<tr>
+	<td>Temperatura mínima</td>
+	<td>{{weather.main.temp_min}}</td>
+	</tr>
+	<tr>
+	<td>Temperatura máxima</td>
+	<td>{{weather.main.temp_max}}</td>
+	</tr>
+	<tr>
+	<td>Presión atmosférica</td>
+	<td>{{weather.main.pressure}}</td>
+	</tr>
+	<tr>
+	<td>Humedad</td>
+	<td>{{weather.main.humidity}}</td>
+	</tr>
+	<tr>
+	<td>Visibilidad</td>
+	<td>{{weather.visibility}}</td>
+	</tr>
+	<tr>
+	<td>Viento (dirección) </td>
+	<td>{{weather.wind.deg}}</td>
+	</tr>
+	<tr>
+	<td>Viento (velocidad)</td>
+	<td>{{weather.wind.speed}}</td>
+	</tr>
+	</tbody>
+	</table>
+	</div>
+	</div>
 	`,
 	providers: []
 })
@@ -53,7 +98,9 @@ export class WeatherWidgetComponent implements OnInit {
 	}
 	weather = {
 		name: 'Esperando datos del servidor',
-		weather: [{ main: 'Esperando datos del servidor' }],
+		country: 'Esperando datos del servidor',
+		timezone: 'Esperando datos del servidor',
+		weather: [{ main: 'Esperando datos del servidor', icon: "assets/10d.png" }],
 		main: {
 			temp: 'Esperando datos del servidor',
 			feels_like: 'Esperando datos del servidor',
@@ -69,9 +116,9 @@ export class WeatherWidgetComponent implements OnInit {
 		}
 	}
 	cities = []
-	static_cities = ['Buenos Aires F.D.', 'Santa Fe', 'San Miguel de Tucumán', 'Río Negro Province', 'Cordova']
+	static_cities = ['Buenos Aires F.D.', 'Santa Fe', 'San Miguel de Tucumán', 'Río Negro Province', 'Cordova', 'Berlin', 'Miami', 'New York']
 	current_city = 'Buenos Aires F.D.'
-
+	started = 0
 
 
 	ngOnInit(): void {
@@ -85,13 +132,20 @@ export class WeatherWidgetComponent implements OnInit {
 	}
 
 	changeCurrentCity(city) {
+		console.log("changeCurrentCity")
+		this.current_city = city
 		let datax = this.cities.filter(x => {
-			return x.name == city
+			return x.name == this.current_city
 		})
 		let data = datax[0]
 		this.weather = {
 			name: data.name,
-			weather: [{ main: data.weather[0].main +" "+ data.weather[0].description }],
+			country: data.sys.country,
+			timezone: data.timezone,
+			weather: [{
+				main: data.weather[0].description,
+				icon: "assets/"+data.weather[0].icon + ".png"
+			}],
 			main: {
 				temp: (data.main.temp) + 'º',
 				feels_like: (data.main.feels_like) + 'º',
@@ -106,14 +160,24 @@ export class WeatherWidgetComponent implements OnInit {
 				speed: data.wind.speed + " kmh"
 			}
 		}
-	 }
+	}
+	
+	getTime(time) {
+		if (isString(time)) {
+			return time
+		}
+	var d = new Date((new Date().getTime())+time*1000)
+	return		d.toUTCString()
+	}
 
 	setWeather(data) {
-		// console.log("🚀 ~ file: weather-widget.component.ts ~ line 108 ~ WeatherWidgetComponent ~ setWeather ~ data", data)
 		data = (JSON.parse(data))
     console.log("🚀 ~ file: weather-widget.component.ts ~ line 109 ~ WeatherWidgetComponent ~ setWeather ~ data", data)
 		this.cities = (data)
-		this.changeCurrentCity('Buenos Aires F.D.')
+		if (this.started == 0) {
+			this.changeCurrentCity('Buenos Aires F.D.')
+			this.started = 1
+		}
 	}
 
 }
